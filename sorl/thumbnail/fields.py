@@ -63,8 +63,9 @@ class ImageWithThumbnailsFieldFile(ImageFieldFile):
         for k, v in args.items():
             kwargs[ALL_ARGS[k]] = v
         # Return thumbnail
-        relative_source_path = getattr(self.instance, self.field.name).name
-        return DjangoThumbnail(relative_source_path, **kwargs)
+        dest_storage = self.field.thumbnail_storage or self.field.storage
+        source = getattr(self.instance, self.field.name)
+        return DjangoThumbnail(source, dest_storage, **kwargs)
 
     def _build_thumbnail_tag(self, thumb):
         opts = dict(src=escape(thumb), width=thumb.width(),
@@ -108,34 +109,41 @@ class ImageWithThumbnailsFieldFile(ImageFieldFile):
 
 class ImageWithThumbnailsField(ImageField):
     """
-    photo = ImageWithThumbnailsField(
-        upload_to='uploads',
-        thumbnail={'size': (80, 80), 'options': ('crop', 'upscale'),
-                   'extension': 'png'},
-        extra_thumbnails={
-            'admin': {'size': (70, 50), 'options': ('sharpen',)},
-        },
-    )
+    ``thumbnail_storage`` can be a separate storage just for the thumbnails,
+    allowing the actual image to be stored elsewhere (e.g. in a place that
+    will be backed up, where as the thumbnails could be considered temporary
+    runtime data that is regenerated when needed). If not given, the default
+    storage is used for both image and thumbnails.
+
+    Example:
+
+        photo = ImageWithThumbnailsField(
+            upload_to='uploads',
+            thumbnail={'size': (80, 80), 'options': ('crop', 'upscale'),
+                       'extension': 'png'},
+            extra_thumbnails={
+                'admin': {'size': (70, 50), 'options': ('sharpen',)},
+            },
+        )
     """
     attr_class = ImageWithThumbnailsFieldFile
 
     def __init__(self, *args, **kwargs):
         # The new arguments for this field aren't explicitly defined so that
         # users can still use normal ImageField positional arguments.
-        thumbnail=kwargs.pop('thumbnail', None)
-        extra_thumbnails=kwargs.pop('extra_thumbnails', None)
-        thumbnail_tag=kwargs.pop('thumbnail_tag', TAG_HTML)
+        self.thumbnail = kwargs.pop('thumbnail', None)
+        self.extra_thumbnails = kwargs.pop('extra_thumbnails', None)
+        self.thumbnail_tag = kwargs.pop('thumbnail_tag', TAG_HTML)
+        self.thumbnail_storage = kwargs.pop('thumbnail_storage', None)
 
         super(ImageWithThumbnailsField, self).__init__(*args, **kwargs)
-        if thumbnail:
-            _verify_thumbnail_attrs(thumbnail)
-        if extra_thumbnails:
-            for extra, attrs in extra_thumbnails.items():
+
+        if self.thumbnail:
+            _verify_thumbnail_attrs(self.thumbnail)
+        if self.extra_thumbnails:
+            for extra, attrs in self.extra_thumbnails.items():
                 name = "%r of 'extra_thumbnails'"
                 _verify_thumbnail_attrs(attrs, name)
-        self.thumbnail = thumbnail
-        self.extra_thumbnails = extra_thumbnails
-        self.thumbnail_tag = thumbnail_tag
 
 
 def _verify_thumbnail_attrs(attrs, name="'thumbnail'"):

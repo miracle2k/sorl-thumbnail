@@ -24,12 +24,15 @@ def get_thumbnail_setting(setting, override=None):
 
 
 class DjangoThumbnail(Thumbnail):
-    def __init__(self, relative_source, requested_size, opts=None,
+    """
+    ``source`` is the ``File`` object to create a thumbnail from.
+
+    ``dest_storage`` is the Django ``Storage`` instance that will be used
+    to save the thumbnail images.
+    """
+    def __init__(self, source, dest_storage, requested_size, opts=None,
                  quality=None, basedir=None, subdir=None, prefix=None,
                  relative_dest=None, processors=None, extension=None):
-        relative_source = force_unicode(relative_source)
-        # Set the absolute filename for the source file
-        source = self._absolute_path(relative_source)
 
         quality = get_thumbnail_setting('QUALITY', quality)
         convert_path = get_thumbnail_setting('CONVERT')
@@ -39,20 +42,21 @@ class DjangoThumbnail(Thumbnail):
 
         # Call super().__init__ now to set the opts attribute. generate() won't
         # get called because we are not setting the dest attribute yet.
-        super(DjangoThumbnail, self).__init__(source, requested_size,
+        super(DjangoThumbnail, self).__init__(source.path, requested_size,
             opts=opts, quality=quality, convert_path=convert_path,
             wvps_path=wvps_path, processors=processors)
 
         # Get the relative filename for the thumbnail image, then set the
         # destination filename
         if relative_dest is None:
+            # XXX: why is this an attribute on self?
             self.relative_dest = \
-               self._get_relative_thumbnail(relative_source, basedir=basedir,
+               self._get_relative_thumbnail(source.name, basedir=basedir,
                                             subdir=subdir, prefix=prefix,
                                             extension=extension)
         else:
             self.relative_dest = relative_dest
-        self.dest = self._absolute_path(self.relative_dest)
+        self.dest = dest_storage.path(self.relative_dest)
 
         # Call generate now that the dest attribute has been set
         self.generate()
@@ -60,7 +64,7 @@ class DjangoThumbnail(Thumbnail):
         # Set the relative & absolute url to the thumbnail
         self.relative_url = \
             iri_to_uri('/'.join(self.relative_dest.split(os.sep)))
-        self.absolute_url = '%s%s' % (settings.MEDIA_URL, self.relative_url)
+        self.absolute_url = dest_storage.url(self.relative_url)
 
     def _get_relative_thumbnail(self, relative_source,
                                 basedir=None, subdir=None, prefix=None,
@@ -83,10 +87,6 @@ class DjangoThumbnail(Thumbnail):
                                                   opts, self.quality,
                                                   extension)
         return os.path.join(basedir, path, subdir, thumbnail_filename)
-
-    def _absolute_path(self, filename):
-        absolute_filename = os.path.join(settings.MEDIA_ROOT, filename)
-        return absolute_filename.encode(settings.FILE_CHARSET)
 
     def __unicode__(self):
         return self.absolute_url
