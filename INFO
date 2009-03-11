@@ -1,0 +1,26 @@
+my-changes
+    Various custom changes on top of the original upstream code.
+
+    Rebases against the upstream trunk branch.
+
+my-storage-refactor
+    Custom attempt to support Django's storage backends. Could
+    potentially be consolidated with the upstream storage-refactor
+    branch if and when work is being done there.
+
+    Rebases against the upstream trunk branch.
+
+my-storage-refactor-changes
+    Various custom changes on top of the storage refactor branch.
+    These are changes that depend on updates made to that branch,
+    but which do not necessarily relate to the intent of implementing
+    storage support per se.
+
+    Rebases against "my-storage-refactor".
+
+podster3:
+    Branch for the podster3 project that merges everything from
+    both "my-changes" and "my-storage-refactor-changes" together.
+
+(master)
+    Currently unused.
