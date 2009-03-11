@@ -65,6 +65,7 @@ class DjangoThumbnail(Thumbnail):
         self.relative_url = \
             iri_to_uri('/'.join(self.relative_dest.split(os.sep)))
         self.absolute_url = dest_storage.url(self.relative_url)
+        self.url = self.absolute_url
 
     def _get_relative_thumbnail(self, relative_source,
                                 basedir=None, subdir=None, prefix=None,
