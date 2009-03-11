@@ -93,6 +93,23 @@ class ImageWithThumbnailsFieldFile(ImageFieldFile):
         return ThumbTags(self)
     extra_thumbnails_tag = property(_get_extra_thumbnails_tag)
 
+    def __getattr__(self, name):
+        """Shortcut to access extra thumbnails via this instance.
+
+        Example:
+
+            ``my_object.photo.medium.url``
+        """
+        result = None
+        if self.extra_thumbnails:
+            try:
+                result = self.extra_thumbnails[name]
+            except KeyError:
+                pass
+        if not result:
+            raise AttributeError(name)
+        return result
+
 # TODO: Should thumbnails be generated when image is saved?
 #    def save(self, name, content, save=True):
 #        # Generate the thumbnails when the image is saved.
