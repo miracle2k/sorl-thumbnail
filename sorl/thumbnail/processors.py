@@ -50,6 +50,9 @@ def scale_and_crop(im, requested_size, opts):
     x, y   = [float(v) for v in im.size]
     xr, yr = [float(v) for v in requested_size]
 
+    if 'fit' in opts:
+        return im.resize((int(xr), int(yr)), resample=Image.ANTIALIAS)
+
     if 'crop' in opts:
         r = max(xr/x, yr/y)
     else:
@@ -64,7 +67,7 @@ def scale_and_crop(im, requested_size, opts):
         if ex or ey:
             im = im.crop((int(ex), int(ey), int(x-ex), int(y-ey)))
     return im
-scale_and_crop.valid_options = ('crop', 'upscale')
+scale_and_crop.valid_options = ('crop', 'upscale', 'fit')
 
 
 def filters(im, requested_size, opts):

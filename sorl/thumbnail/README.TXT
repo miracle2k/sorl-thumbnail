@@ -59,6 +59,10 @@ the `thumbnail processors`_, valid options are:
       Crop the source image height or width to exactly match the requested
       thumbnail size (the default is to proportionally resize the source image
       to fit within the requested thumbnail size).
+      
+``fit``
+      Force the source image to match requested thumbnail size, stretching it
+      as necessary, i.e. proportions are not maintained.
 
 ``autocrop``
       Remove any unnecessary whitespace from the edges of the source image.
